@@ -50,7 +50,7 @@ jobs:
 
       - name: Use official Gradle distribution CDN
         working-directory: truth-or-dare
-        run: sed -i 's#services.gradle.org/distributions/gradle-8.11.1-all.zip#downloads.gradle.org/distributions/gradle-8.11.1-bin.zip#' android/gradle/wrapper/gradle-wrapper.properties
+        run: sed -i 's#services.gradle.org/distributions/gradle-8.11.1-all.zip#repo.huaweicloud.com/gradle/gradle-8.11.1-bin.zip#' android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Build APK
         working-directory: truth-or-dare
