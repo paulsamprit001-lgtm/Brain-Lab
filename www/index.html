@@ -315,7 +315,12 @@ const games = {
   reaction: { name: 'Reaction Flash',     blurb: 'Tap the moment the square turns green.',        pass: () => 4,            fmt: v => `${v} of 6` },
   simon:  { name: 'Simon Pads',  blurb: 'Repeat the growing sequence of lit pads.', pass: l => 4 + l, fmt: v => `${v} long` },
   hunt:   { name: 'Number Hunt', blurb: 'Tap 1, 2, 3 in order as fast as you can.', pass: l => 3 + l, fmt: v => `${v} boards` },
-  rule:   { name: 'Rule Switch', blurb: 'The rule changes without warning. Keep up.', pass: () => 8, fmt: v => `${v} of 12` }
+  rule:   { name: 'Rule Switch', blurb: 'The rule changes without warning. Keep up.', pass: () => 8, fmt: v => `${v} of 12` },
+  scramble:{ name:'Word Shuffle', blurb:'Unscramble letters before the clue fades.', pass:()=>4, fmt:v=>`${v} of 6` },
+  focus:{ name:'Focus Burst', blurb:'Spot the target symbol in a busy field.', pass:()=>5, fmt:v=>`${v} of 8` },
+  direction:{ name:'Direction Flip', blurb:'Follow changing left, right, up and down cues.', pass:()=>6, fmt:v=>`${v} of 8` },
+  estimate:{ name:'Quick Estimate', blurb:'Choose the closest answer without overthinking.', pass:()=>5, fmt:v=>`${v} of 8` },
+  sequence:{ name:'Soundless Sequence', blurb:'Memorise a growing pattern of shapes.', pass:l=>Math.min(7,3+l), fmt:v=>`${v} steps` }
 };
 
 /* ---------- Saved progress (account database, with a local copy) ---------- */
@@ -428,7 +433,12 @@ function renderHome() {
     reaction: ['⚡', '#FFB020', '#FF6B3D'],
     simon:    ['🟦', '#4F6BFF', '#A06BFF'],
     hunt:     ['🎯', '#FF4F79', '#FF9F5A'],
-    rule:     ['🔀', '#27B3C7', '#9B6BFF']
+    rule:     ['🔀', '#27B3C7', '#9B6BFF'],
+    scramble: ['🔤', '#F08A5D', '#F6C667'],
+    focus: ['✳️', '#6C63FF', '#A8A2FF'],
+    direction: ['🧭', '#2BB8A5', '#8CE0CE'],
+    estimate: ['📐', '#E76F9A', '#F4A6C1'],
+    sequence: ['🧩', '#4D96FF', '#9CCBFF']
   };
   $('#list').innerHTML = Object.entries(games).map(([id, g]) => {
     const p = prog(id);
@@ -1098,11 +1108,65 @@ function runRule() {
   trial();
 }
 
+/* ---------- 11–15. New quick-play games ---------- */
+function quickChoice(id, total, makeQuestion, renderQuestion) {
+  const stage=$('#stage'), level=prog(id).level;
+  let i=0,score=0,locked=false;
+  function next(){
+    if(i>=total){finish(id,score);return;}
+    const q=makeQuestion(level,i);
+    locked=false;
+    stage.innerHTML=`<div class="meta">${i+1} of ${total}</div><div class="prob">${renderQuestion(q)}</div><div class="opts">${q.opts.map((v,k)=>`<button class="opt" data-k="${k}">${v}</button>`).join('')}</div><p class="feedback" id="qfb"></p>`;
+    stage.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+      if(locked)return; locked=true;
+      const k=+b.dataset.k,ok=k===q.answer;
+      if(ok)score++;
+      b.classList.add(ok?'ok':'bad');
+      if(!ok)stage.querySelectorAll('.opt')[q.answer].classList.add('ok');
+      $('#qfb').textContent=ok?'Correct.':'Not quite.';
+      i++;later(next,650);
+    });
+  }
+  next();
+}
+function runScramble(){
+ const words=['PLANET','GARDEN','POCKET','STREAM','BRIGHT','CASTLE','MARKET','SILVER','ORANGE','PUZZLE','WINDOW','CANDLE'];
+ quickChoice('scramble',6,(l)=>{const word=words[rnd(0,words.length-1)],a=word.split('');do{shuffle(a)}while(a.join('')===word);const opts=shuffle([word,a.join(''),shuffle(word.split('')).join(''),shuffle(word.split('')).join('')]);return{word,opts,answer:opts.indexOf(word)};},q=>`Unscramble: <strong style="letter-spacing:.18em">${q.opts.find(x=>x!==q.word)===undefined?q.word:q.word.split('').sort().join(' ')}</strong><br><span class="hint">Choose the correctly formed word</span>`);
+}
+function runFocus(){
+ const symbols=['◆','●','▲','■','✦','⬟','✚'];
+ quickChoice('focus',8,()=>{const target=symbols[rnd(0,symbols.length-1)],opts=shuffle([target,...Array.from({length:3},()=>symbols.filter(x=>x!==target)[rnd(0,5)])]);return{target,opts,answer:opts.indexOf(target)};},q=>`Tap the target: <strong style="font-size:2.6em">${q.target}</strong>`);
+}
+function runDirection(){
+ const dirs=['←','→','↑','↓'];
+ quickChoice('direction',8,(l,i)=>{const cue=dirs[rnd(0,3)],opposite={'←':'→','→':'←','↑':'↓','↓':'↑'},opts=shuffle([cue,opposite[cue],dirs.filter(x=>x!==cue&&x!==opposite[cue])[0],dirs.filter(x=>x!==cue&&x!==opposite[cue])[1]]);return{cue,opts,answer:opts.indexOf(cue)};},q=>`Press the direction shown: <strong style="font-size:2.8em">${q.cue}</strong>`);
+}
+function runEstimate(){
+ quickChoice('estimate',8,(l)=>{const a=rnd(12,35+l*3),b=rnd(8,25+l*2),ans=a*b,opts=shuffle([ans,ans+rnd(3,12),ans-rnd(3,12),ans+rnd(15,25)]);return{a,b,opts,answer:opts.indexOf(ans)};},q=>`Estimate <strong>${q.a} × ${q.b}</strong><br><span class="hint">Choose the exact result</span>`);
+}
+function runSequence(){
+ const icons=['●','▲','■','◆','✦','⬟','✚'];
+ const level=prog('sequence').level,stage=$('#stage');
+ let round=0,score=0;
+ function show(){
+  if(round===6){finish('sequence',score);return;}
+  const n=Math.min(3+Math.floor((level+round)/2),7),seq=Array.from({length:n},()=>icons[rnd(0,icons.length-1)]);
+  stage.innerHTML=`<p class="hint">Memorise this pattern</p><div class="seq">${seq.map(x=>`<span class="tile">${x}</span>`).join('')}</div><button class="btn primary" id="ready">I've memorised it</button>`;
+  $('#ready').onclick=()=>{
+   stage.innerHTML=`<p class="hint">Repeat the pattern in order</p><div class="opts" id="seqopts">${shuffle([...icons]).map(x=>`<button class="opt" data-v="${x}">${x}</button>`).join('')}</div><div class="seq" id="chosen"></div><p class="feedback" id="sfb"></p><button class="btn primary" id="submit">Check pattern</button>`;
+   const chosen=[];stage.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(chosen.length<n){chosen.push(b.dataset.v);$('#chosen').innerHTML=chosen.map(x=>`<span class="tile">${x}</span>`).join('');}});
+   $('#submit').onclick=()=>{if(chosen.length!==n)return;const ok=chosen.every((x,i)=>x===seq[i]);if(ok)score++;$('#sfb').textContent=ok?'Perfect recall.':'The pattern was '+seq.join(' ');round++;later(show,900);};
+  };
+ }
+ show();
+}
+
 /* ---------- Wiring ---------- */
 const runners = {
   seq: runSeq, grid: runGrid, sprint: runSprint, stroop: runStroop,
   digits: runDigits, odd: runOdd, reaction: runReaction,
-  simon: runSimon, hunt: runHunt, rule: runRule
+  simon: runSimon, hunt: runHunt, rule: runRule,
+  scramble:runScramble, focus:runFocus, direction:runDirection, estimate:runEstimate, sequence:runSequence
 };
 
 /* ---------- Backup and restore (works in the HTML file and in the app) ---------- */
