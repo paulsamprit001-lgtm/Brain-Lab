@@ -1131,7 +1131,7 @@ function quickChoice(id, total, makeQuestion, renderQuestion) {
 }
 function runScramble(){
  const words=['PLANET','GARDEN','POCKET','STREAM','BRIGHT','CASTLE','MARKET','SILVER','ORANGE','PUZZLE','WINDOW','CANDLE'];
- quickChoice('scramble',6,(l)=>{const word=words[rnd(0,words.length-1)],a=word.split('');do{shuffle(a)}while(a.join('')===word);const opts=shuffle([word,a.join(''),shuffle(word.split('')).join(''),shuffle(word.split('')).join('')]);return{word,opts,answer:opts.indexOf(word)};},q=>`Unscramble: <strong style="letter-spacing:.18em">${q.opts.find(x=>x!==q.word)===undefined?q.word:q.word.split('').sort().join(' ')}</strong><br><span class="hint">Choose the correctly formed word</span>`);
+ quickChoice('scramble',6,(l)=>{const word=words[rnd(0,words.length-1)],a=word.split('');do{shuffle(a)}while(a.join('')===word);const opts=shuffle([word,a.join(''),shuffle(word.split('')).join(''),shuffle(word.split('')).join('')]);return{word,scrambled:a.join(''),opts,answer:opts.indexOf(word)};},q=>`Unscramble: <strong style="letter-spacing:.18em">${q.scrambled.split('').join(' ')}</strong><br><span class="hint">Choose the correctly formed word</span>`);
 }
 function runFocus(){
  const symbols=['◆','●','▲','■','✦','⬟','✚'];
@@ -1142,7 +1142,7 @@ function runDirection(){
  quickChoice('direction',8,(l,i)=>{const cue=dirs[rnd(0,3)],opposite={'←':'→','→':'←','↑':'↓','↓':'↑'},opts=shuffle([cue,opposite[cue],dirs.filter(x=>x!==cue&&x!==opposite[cue])[0],dirs.filter(x=>x!==cue&&x!==opposite[cue])[1]]);return{cue,opts,answer:opts.indexOf(cue)};},q=>`Press the direction shown: <strong style="font-size:2.8em">${q.cue}</strong>`);
 }
 function runEstimate(){
- quickChoice('estimate',8,(l)=>{const a=rnd(12,35+l*3),b=rnd(8,25+l*2),ans=a*b,opts=shuffle([ans,ans+rnd(3,12),ans-rnd(3,12),ans+rnd(15,25)]);return{a,b,opts,answer:opts.indexOf(ans)};},q=>`Estimate <strong>${q.a} × ${q.b}</strong><br><span class="hint">Choose the exact result</span>`);
+ quickChoice('estimate',8,(l)=>{const a=rnd(12,35+l*3),b=rnd(8,25+l*2),ans=a*b,opts=shuffle([ans,ans+rnd(3,12),ans-rnd(3,12),ans+rnd(15,25)]);return{a,b,opts,answer:opts.indexOf(ans)};},q=>`Estimate <strong>${q.a} × ${q.b}</strong><br><span class="hint">Choose the closest result</span>`);
 }
 function runSequence(){
  const icons=['●','▲','■','◆','✦','⬟','✚'];
