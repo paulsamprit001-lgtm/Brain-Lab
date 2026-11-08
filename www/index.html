@@ -1,0 +1,1079 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brain Lab</title>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Palette: dark is the default, light follows the viewer's setting */
+:root{
+  --bg:#0E1024; --glow1:rgba(124,92,255,.38); --glow2:rgba(255,94,162,.26); --glow3:rgba(56,217,198,.18);
+  --card:rgba(255,255,255,.075); --card-solid:#1A1F3A; --line:rgba(255,255,255,.13);
+  --ink:#F4F1FF; --muted:#A9AED6; --accent:#8F7BFF; --accent2:#FF6FB1;
+  --ok:#3DDC97; --bad:#FF6B6B; --shadow:0 12px 32px rgba(0,0,0,.38);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F1FF; --glow1:rgba(124,92,255,.22); --glow2:rgba(255,120,180,.2); --glow3:rgba(56,217,198,.16);
+    --card:rgba(255,255,255,.72); --card-solid:#FFFFFF; --line:rgba(30,20,80,.11);
+    --ink:#1B1740; --muted:#625F85; --accent:#6A52F0; --accent2:#F0508F;
+    --ok:#1F9D63; --bad:#E0493A; --shadow:0 12px 30px rgba(60,40,140,.14);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F1FF; --glow1:rgba(124,92,255,.22); --glow2:rgba(255,120,180,.2); --glow3:rgba(56,217,198,.16);
+  --card:rgba(255,255,255,.72); --card-solid:#FFFFFF; --line:rgba(30,20,80,.11);
+  --ink:#1B1740; --muted:#625F85; --accent:#6A52F0; --accent2:#F0508F;
+  --ok:#1F9D63; --bad:#E0493A; --shadow:0 12px 30px rgba(60,40,140,.14);
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  color:var(--ink);
+  background:
+    radial-gradient(900px 620px at 8% -8%, var(--glow1), transparent 62%),
+    radial-gradient(760px 520px at 105% 12%, var(--glow2), transparent 60%),
+    radial-gradient(900px 640px at 50% 118%, var(--glow3), transparent 62%),
+    var(--bg);
+  background-attachment:fixed;
+  font:400 16px/1.5 Inter, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:580px; margin:0 auto; padding:calc(env(safe-area-inset-top,0px) + 28px) 18px calc(env(safe-area-inset-bottom,0px) + 40px); min-height:100vh}
+h1,h2,h3{font-family:Fraunces, Georgia, serif; font-weight:800; letter-spacing:-0.02em; margin:0}
+h1{font-size:48px; line-height:1.02; background:linear-gradient(100deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent; padding-bottom:4px}
+.lede{color:var(--muted); margin:10px 0 0; max-width:34ch; font-size:16px}
+.topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:22px}
+.back{appearance:none; background:var(--card); border:1px solid var(--line); color:var(--ink); font:600 14px Inter, sans-serif; padding:8px 14px; border-radius:999px; cursor:pointer; box-shadow:var(--shadow); backdrop-filter:blur(8px)}
+.paper-card{background:var(--card); border:1px solid var(--line); border-radius:24px; padding:26px; box-shadow:var(--shadow); backdrop-filter:blur(12px)}
+
+/* Home: game cards */
+.list{display:grid; gap:14px; margin-top:30px}
+.gcard{
+  appearance:none; width:100%; display:flex; align-items:center; gap:16px; text-align:left; color:inherit; font:inherit; cursor:pointer;
+  background:var(--card); border:1px solid var(--line); border-radius:22px; padding:16px;
+  box-shadow:var(--shadow); backdrop-filter:blur(10px); transition:transform .15s ease, box-shadow .15s ease;
+}
+.gcard:hover{transform:translateY(-2px)}
+.gcard:active{transform:scale(.985)}
+.gicon{flex:0 0 58px; height:58px; border-radius:18px; display:grid; place-items:center; font-size:28px; background:linear-gradient(135deg,var(--c1),var(--c2)); box-shadow:0 10px 22px -8px var(--c1), inset 0 1px 0 rgba(255,255,255,.35)}
+.gtext{flex:1; min-width:0}
+.gn{display:block; font:800 19px/1.2 Fraunces, Georgia, serif}
+.gb{display:block; color:var(--muted); font-size:14px; margin-top:4px}
+.gstat{flex:0 0 auto; text-align:right}
+.lvl-pill{display:inline-block; font:700 12px Inter, sans-serif; letter-spacing:.06em; color:#fff; background:linear-gradient(135deg,var(--c1),var(--c2)); border-radius:999px; padding:5px 11px; box-shadow:0 6px 14px -6px var(--c1)}
+.gbest{display:block; font-size:12px; color:var(--muted); margin-top:7px; white-space:nowrap}
+
+/* Game screen */
+.game-head h2{font-size:36px; line-height:1.08}
+.game-head p{color:var(--muted); margin:8px 0 0}
+.tag{display:inline-block; font:700 13px Inter, sans-serif; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:999px; padding:6px 14px; margin-top:16px !important; box-shadow:0 8px 18px -8px var(--accent)}
+#stage{margin-top:26px}
+
+/* Buttons */
+.btn{
+  appearance:none; border:1px solid var(--line); background:var(--card-solid); color:var(--ink);
+  font:700 15px Inter, sans-serif; padding:13px 22px; border-radius:16px; cursor:pointer;
+  box-shadow:0 5px 0 var(--line), var(--shadow); transition:transform .08s ease, box-shadow .08s ease;
+}
+.btn:active{transform:translateY(4px); box-shadow:0 1px 0 var(--line)}
+.btn.primary{border:0; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent2)); box-shadow:0 6px 0 rgba(30,15,90,.45), 0 16px 30px -10px var(--accent)}
+.btn.primary:active{box-shadow:0 2px 0 rgba(30,15,90,.45), 0 8px 18px -10px var(--accent)}
+.btn.big{font-size:17px; padding:17px 30px}
+.row{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:22px}
+:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+.hint{color:var(--muted); font-size:14px; text-align:center; margin:14px 0 0}
+.hint b{color:var(--ink)}
+
+/* Shared game parts */
+.progress{height:8px; background:var(--line); border-radius:99px; overflow:hidden}
+.progress i{display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:99px; transition:width .3s ease}
+.seq{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:30px 0 26px}
+.tile{min-width:66px; height:66px; padding:0 12px; display:grid; place-items:center; background:var(--card-solid); border:1px solid var(--line); border-radius:18px; box-shadow:0 6px 0 var(--line), var(--shadow); font:800 24px Fraunces, Georgia, serif; font-variant-numeric:tabular-nums}
+.tile.q{background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:0; box-shadow:0 8px 20px -6px var(--accent)}
+.opts{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; max-width:340px; margin:0 auto}
+.opts.four{grid-template-columns:repeat(4,1fr); max-width:440px}
+.opt{
+  appearance:none; background:var(--card-solid); border:1px solid var(--line); color:var(--ink);
+  font:700 19px Inter, sans-serif; padding:16px 0; border-radius:18px; cursor:pointer;
+  box-shadow:0 5px 0 var(--line), var(--shadow); transition:transform .08s ease; font-variant-numeric:tabular-nums;
+}
+.opt:hover{transform:translateY(-1px)}
+.opt:active{transform:translateY(3px)}
+.opt.ok{background:linear-gradient(135deg,#3DDC97,#1F9D63); border-color:transparent; color:#fff; box-shadow:0 8px 20px -8px #3DDC97}
+.opt.bad{background:linear-gradient(135deg,#FF8A7A,#E0493A); border-color:transparent; color:#fff; box-shadow:0 8px 20px -8px #E0493A}
+.feedback{min-height:24px; text-align:center; color:var(--muted); margin:18px 0 0; font-size:15px}
+
+/* Timers and bars */
+.timer{text-align:center}
+#left{font:800 76px/1 Fraunces, Georgia, serif; font-variant-numeric:tabular-nums; background:linear-gradient(100deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.unit{display:block; color:var(--muted); font-size:14px; margin-top:6px}
+.timer-row{font:800 30px/1 Fraunces, Georgia, serif; text-align:center; margin-top:14px; font-variant-numeric:tabular-nums}
+.bar{height:10px; background:var(--line); border-radius:99px; overflow:hidden; margin-top:14px}
+.bar i{display:block; height:100%; width:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:99px; box-shadow:0 0 12px var(--accent)}
+.meta{text-align:center; color:var(--muted); font-size:14px; font-variant-numeric:tabular-nums}
+
+/* Sprint */
+.prob{font:800 54px/1.1 Fraunces, Georgia, serif; text-align:center; margin:26px 0 20px; font-variant-numeric:tabular-nums}
+.prob.bad{color:var(--bad)}
+.field{display:block; width:100%; max-width:240px; margin:0 auto; text-align:center; font:700 28px Inter, sans-serif; padding:13px; background:var(--card-solid); color:var(--ink); border:1px solid var(--line); border-radius:16px; letter-spacing:.2em; box-shadow:inset 0 2px 6px rgba(0,0,0,.18)}
+
+/* Memory grid and digits */
+.grid{display:grid; gap:10px; max-width:330px; margin:28px auto 0}
+.cell{aspect-ratio:1; border-radius:14px; border:1px solid var(--line); background:var(--card-solid); cursor:pointer; padding:0; box-shadow:inset 0 2px 5px rgba(0,0,0,.15); transition:background .2s, box-shadow .2s, transform .1s}
+.cell:active{transform:scale(.94)}
+.cell.lit{background:linear-gradient(135deg,var(--accent),var(--accent2)); border-color:transparent; box-shadow:0 0 22px var(--accent)}
+.cell.hit{background:linear-gradient(135deg,#3DDC97,#1F9D63); border-color:transparent}
+.cell.miss{background:linear-gradient(135deg,#FF8A7A,#E0493A); border-color:transparent}
+.cell.reveal{background:transparent; border:2px dashed var(--accent)}
+.digit{font:800 100px/1 Fraunces, Georgia, serif; text-align:center; margin:34px 0 16px; min-height:100px; font-variant-numeric:tabular-nums; background:linear-gradient(100deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent}
+
+/* Stroop */
+.word{font:800 64px/1.1 Fraunces, Georgia, serif; text-align:center; margin:30px 0 22px; transition:opacity .2s; text-shadow:0 6px 24px rgba(0,0,0,.25)}
+.word.dim{opacity:.25}
+
+/* Odd tile and number hunt */
+.tilegrid{display:grid; gap:10px; max-width:340px; margin:26px auto 0}
+.tt{aspect-ratio:1; border-radius:14px; border:2px solid transparent; cursor:pointer; padding:0; box-shadow:0 8px 18px -10px rgba(0,0,0,.45); transition:transform .08s}
+.tt:active{transform:scale(.93)}
+.tt.ok{border-color:var(--ok); box-shadow:0 0 20px var(--ok)}
+.tt.bad{border-color:var(--bad)}
+.tt.show{border-color:var(--ink)}
+.nh{aspect-ratio:1; border-radius:14px; border:1px solid var(--line); background:var(--card-solid); color:var(--ink); font:700 18px Inter, sans-serif; cursor:pointer; padding:0; font-variant-numeric:tabular-nums; box-shadow:0 4px 0 var(--line)}
+.nh:active{transform:translateY(2px); box-shadow:none}
+.nh.done{background:linear-gradient(135deg,#3DDC97,#1F9D63); border-color:transparent; color:#fff; cursor:default; box-shadow:none}
+.nh.wrong{background:linear-gradient(135deg,#FF8A7A,#E0493A); border-color:transparent; color:#fff}
+
+/* Simon */
+.pads{display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:310px; margin:28px auto 0}
+.pad{aspect-ratio:1; border:0; border-radius:24px; opacity:.4; cursor:pointer; transition:opacity .12s, transform .12s, box-shadow .12s; box-shadow:inset 0 -8px 16px rgba(0,0,0,.25), 0 10px 24px -10px rgba(0,0,0,.5)}
+.pad.lit{opacity:1; transform:scale(1.03); box-shadow:inset 0 -8px 16px rgba(0,0,0,.2), 0 0 34px 4px currentColor}
+.pad:active{transform:scale(.96)}
+
+/* Reaction */
+.react-zone{margin:28px auto 0; max-width:370px; height:250px; border-radius:26px; border:1px solid var(--line); display:grid; place-items:center; cursor:pointer; font:800 24px Fraunces, Georgia, serif; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:none; -webkit-tap-highlight-color:transparent; background:var(--card-solid); box-shadow:var(--shadow); transition:background .1s}
+.react-zone.go{background:linear-gradient(135deg,#3DDC97,#1F9D63); border-color:transparent; color:#fff; box-shadow:0 0 50px -6px #3DDC97}
+.react-zone.early{background:linear-gradient(135deg,#FF8A7A,#E0493A); border-color:transparent; color:#fff}
+
+/* Results */
+.result{text-align:center; padding:16px 0}
+.res-title{font-size:38px; line-height:1.1; background:linear-gradient(100deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.res-score{font:800 64px/1.1 Fraunces, Georgia, serif; margin:14px 0 6px; font-variant-numeric:tabular-nums}
+.res-note{color:var(--muted); margin:0}
+
+/* Status and backup */
+#sstat{margin-top:18px}
+.backup{margin-top:34px; padding:22px; background:var(--card); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); backdrop-filter:blur(10px)}
+.bk-title{font:800 22px/1.2 Fraunces, Georgia, serif; margin:0 0 8px}
+.bk-text{display:block; width:100%; min-height:96px; margin-top:12px; font:12px/1.4 ui-monospace, Menlo, Consolas, monospace; background:var(--card-solid); color:var(--ink); border:1px solid var(--line); border-radius:14px; padding:12px; resize:vertical}
+.bk-note{color:var(--muted); font-size:14px; margin:6px 0 0}
+
+@media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section id="home">
+    <header style="margin-bottom:0">
+      <h1>Brain Lab</h1>
+      <p class="lede">Seven short experiments. Each one gets harder as you level up.</p>
+    </header>
+    <div class="list" id="list"></div>
+    <p class="hint" id="sstat" style="text-align:left;margin-top:18px">Checking storage&hellip;</p>
+    <section class="backup" id="backup">
+      <h3 class="bk-title">Back up your progress</h3>
+      <p class="bk-note">Download a backup before you update the app file. Then restore it in the new version, and your levels and best scores carry over.</p>
+      <div class="row" style="justify-content:flex-start"><button class="btn" id="bk-dl">Download backup</button><button class="btn" id="bk-copy">Copy text</button></div>
+      <textarea id="bk-text" class="bk-text" readonly aria-label="Your progress backup"></textarea>
+      <p class="bk-note" style="margin-top:20px">To restore, paste a backup below and press Restore.</p>
+      <textarea id="bk-in" class="bk-text" placeholder="Paste a backup here" aria-label="Paste a backup"></textarea>
+      <div class="row" style="justify-content:flex-start"><button class="btn primary" id="bk-restore">Restore</button></div>
+      <p class="bk-note" id="bk-msg"></p>
+    </section>
+  </section>
+
+  <section id="game" hidden>
+    <div class="topbar">
+      <button class="back" onclick="goHome()">&larr; All experiments</button>
+    </div>
+    <div class="game-head">
+      <h2 id="gtitle"></h2>
+      <p id="gblurb"></p>
+      <p class="tag" id="gmeta"></p>
+    </div>
+    <div id="stage"></div>
+  </section>
+
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/* ---------- Games and level rules ---------- */
+const gridStart = l => 2 + Math.ceil(l / 2);
+
+const games = {
+  seq:      { name: 'Pattern Lab',        blurb: 'Find the number that comes next.',              pass: () => 6,             fmt: v => `${v} of 8` },
+  grid:     { name: 'Memory Grid',        blurb: 'Remember which squares lit up.',                pass: l => gridStart(l) + 2, fmt: v => `${v} squares` },
+  sprint:   { name: 'Mental Math Sprint', blurb: 'Sixty seconds of sums that get harder.',        pass: l => 8 + l * 2,      fmt: v => `${v} solved` },
+  stroop:   { name: 'Colour Clash',       blurb: 'Name the ink colour, not the word.',           pass: () => 9,             fmt: v => `${v} of 12` },
+  digits:   { name: 'Digit Echo',         blurb: 'Watch the digits, then type them backwards.',   pass: l => l + 5,          fmt: v => `${v} digits` },
+  odd:      { name: 'Odd Tile',           blurb: 'Find the one tile with a slightly different shade.', pass: () => 7,       fmt: v => `${v} of 10` },
+  reaction: { name: 'Reaction Flash',     blurb: 'Tap the moment the square turns green.',        pass: () => 4,            fmt: v => `${v} of 6` },
+  simon:  { name: 'Simon Pads',  blurb: 'Repeat the growing sequence of lit pads.', pass: l => 4 + l, fmt: v => `${v} long` },
+  hunt:   { name: 'Number Hunt', blurb: 'Tap 1, 2, 3 in order as fast as you can.', pass: l => 3 + l, fmt: v => `${v} boards` },
+  rule:   { name: 'Rule Switch', blurb: 'The rule changes without warning. Keep up.', pass: () => 8, fmt: v => `${v} of 12` }
+};
+
+/* ---------- Saved progress (account database, with a local copy) ---------- */
+const KEY = 'brainlab.v2';          // local copy on this device
+const SCHEMA = 3;                   // bump this when the saved shape changes
+const UPGRADES = {
+  // Example for a future bump: 4: games => ({ ...games, newGame: { level: 1, best: 0 } }),
+};
+let S = {};
+let remote = null;                  // database document for this viewer
+let pending = null, saving = false;
+
+function sanitize(games) {
+  const out = {};
+  if (!games || typeof games !== 'object') return out;
+  for (const [id, g] of Object.entries(games)) {
+    if (!g || typeof g !== 'object') continue;
+    out[id] = {
+      level: Math.max(1, Math.floor(Number(g.level) || 1)),
+      best: Math.max(0, Math.floor(Number(g.best) || 0))
+    };
+  }
+  return out;
+}
+
+// Upgrades any saved data, from any older schema, to the current one.
+function migrate(doc) {
+  if (!doc || typeof doc !== 'object') return {};
+  const version = doc.schema || 2;              // unwrapped saves are the original format
+  let games = doc.schema ? (doc.games || {}) : doc;
+  for (let v = version + 1; v <= SCHEMA; v++) {
+    if (UPGRADES[v]) games = UPGRADES[v](games);
+  }
+  return sanitize(games);
+}
+
+function prog(id) { if (!S[id]) S[id] = { level: 1, best: 0 }; return S[id]; }
+
+function setStatus(text) { const el = document.getElementById('sstat'); if (el) el.textContent = text; }
+
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+  if (remote) {
+    pending = JSON.parse(JSON.stringify({ schema: SCHEMA, updated: Date.now(), games: S }));
+    flush();
+  }
+}
+
+// One write at a time; the latest state always wins.
+async function flush() {
+  if (saving || !pending) return;
+  saving = true;
+  const doc = pending;
+  pending = null;
+  try {
+    await remote.set(doc);
+    setStatus('Progress saved to your account');
+  } catch (e) {
+    setStatus('Saved on this device only right now');
+  }
+  saving = false;
+  if (pending) flush();
+}
+
+async function initStore() {
+  let local = {};
+  try { local = migrate(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch (e) {}
+  S = local;
+  renderHome();
+
+  let db = null, user = null, uid = null;
+  try {
+    db = await window.claude.use('db');
+    user = await window.claude.use('user');
+  } catch (e) {}
+  if (db && user) { try { uid = await user.id(); } catch (e) {} }
+  if (!db || !uid) { setStatus('Saved on this device only'); renderHome(); return; }
+
+  remote = db.collection('data/users/' + uid).doc('progress');
+  try {
+    const snap = await remote.get();
+    if (snap.exists) {
+      S = migrate(snap.data());                  // account copy is the source of truth
+    } else if (Object.keys(local).length) {
+      pending = JSON.parse(JSON.stringify({ schema: SCHEMA, updated: Date.now(), games: S }));
+      await flush();                              // first sync: upload progress from this device
+    }
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+    setStatus('Progress saved to your account');
+  } catch (e) {
+    setStatus('Saved on this device only right now');
+  }
+  renderHome();
+}
+
+/* ---------- Navigation ---------- */
+let session = 0;   // guards delayed callbacks from an earlier screen
+let tick = null;   // interval used by the timed game
+function later(fn, ms) { const s = session; setTimeout(() => { if (s === session) fn(); }, ms); }
+
+function renderHome() {
+  if ($("#bk-text")) $("#bk-text").value = backupJSON();
+  const THEME = {
+    seq:      ['🔢', '#7C5CFF', '#B388FF'],
+    grid:     ['🧱', '#2BB8FF', '#4FE0C2'],
+    sprint:   ['➕', '#FF8A4C', '#FFC23D'],
+    stroop:   ['🎨', '#FF5FA2', '#FF8FD0'],
+    digits:   ['🔁', '#3FC1A8', '#7EE8A8'],
+    odd:      ['🔍', '#5A7BFF', '#8FD3FF'],
+    reaction: ['⚡', '#FFB020', '#FF6B3D'],
+    simon:    ['🟦', '#4F6BFF', '#A06BFF'],
+    hunt:     ['🎯', '#FF4F79', '#FF9F5A'],
+    rule:     ['🔀', '#27B3C7', '#9B6BFF']
+  };
+  $('#list').innerHTML = Object.entries(games).map(([id, g]) => {
+    const p = prog(id);
+    const [icon, c1, c2] = THEME[id] || ['🧠', '#7C5CFF', '#FF6FB1'];
+    return `
+    <button class="gcard" style="--c1:${c1};--c2:${c2}" onclick="openGame('${id}')">
+      <span class="gicon">${icon}</span>
+      <span class="gtext"><span class="gn">${g.name}</span><span class="gb">${g.blurb}</span></span>
+      <span class="gstat"><span class="lvl-pill">LV ${p.level}</span><span class="gbest">${p.best ? 'Best ' + g.fmt(p.best) : 'Not played yet'}</span></span>
+    </button>`;
+  }).join('');
+}
+
+function goHome() {
+  session++; clearInterval(tick); tick = null;
+  $('#game').hidden = true; $('#home').hidden = false;
+  renderHome();
+  window.scrollTo(0, 0);
+}
+
+function setHead(id) {
+  const p = prog(id), g = games[id];
+  $('#gtitle').textContent = g.name;
+  $('#gblurb').textContent = g.blurb;
+  $('#gmeta').textContent = `Level ${p.level} \u00b7 Reach ${g.pass(p.level)} to advance`;
+}
+
+function openGame(id) {
+  session++; clearInterval(tick); tick = null;
+  $('#home').hidden = true; $('#game').hidden = false;
+  setHead(id);
+  $('#stage').innerHTML = `<div class="result"><button class="btn primary big" onclick="play('${id}')">Begin</button></div>`;
+  window.scrollTo(0, 0);
+}
+
+function play(id) {
+  session++; clearInterval(tick); tick = null;
+  setHead(id);
+  runners[id]();
+}
+
+function finish(id, score) {
+  const p = prog(id), g = games[id], need = g.pass(p.level);
+  const passed = score >= need;
+  if (score > p.best) p.best = score;
+  if (passed) p.level++;
+  persist();
+  setHead(id);
+  const title = passed ? 'Level up' : 'Keep practising';
+  const note = passed
+    ? `You are now on level ${p.level}. Harder questions are next.`
+    : `Reach ${need} to move up from level ${p.level}.`;
+  $('#stage').innerHTML = `
+    <div class="paper-card result">
+      <h2 class="res-title">${title}</h2>
+      <div class="res-score">${g.fmt(score)}</div>
+      <p class="res-note">${note}</p>
+      <div class="row">
+        <button class="btn primary" onclick="play('${id}')">${passed ? 'Next level' : 'Try again'}</button>
+        <button class="btn" onclick="goHome()">All experiments</button>
+      </div>
+    </div>`;
+}
+
+/* ---------- Shared countdown ---------- */
+function countdown(limit, secsId, barId) {
+  clearInterval(tick);
+  const bar = $('#' + barId);
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  void bar.offsetWidth;                       // force reflow so the reset registers
+  bar.style.transition = `width ${limit}ms linear`;
+  bar.style.width = '0%';
+  const t0 = performance.now();
+  const id = setInterval(() => {
+    const left = Math.max(0, limit - (performance.now() - t0));
+    const s = document.getElementById(secsId);
+    if (s) s.textContent = (left / 1000).toFixed(1);
+    if (left <= 0) clearInterval(id);
+  }, 100);
+  tick = id;
+  return id;
+}
+
+/* ---------- 1. Pattern Lab ---------- */
+function seqQuestion(d) {
+  const kinds = [0, 1];
+  if (d >= 2) kinds.push(2);
+  if (d >= 3) kinds.push(3);
+  if (d >= 4) kinds.push(4);
+  const kind = kinds[rnd(0, kinds.length - 1)];
+  let t = [];
+  if (kind === 0) {                       // add a fixed step
+    const a = rnd(1, 10 + d * 5), s = rnd(2, 3 + d * 3);
+    t = [0, 1, 2, 3, 4].map(i => a + s * i);
+  } else if (kind === 1) {                // alternating steps
+    const d1 = rnd(1, 2 + d * 2), d2 = rnd(1, 2 + d * 2);
+    let v = rnd(2, 10 + d * 4);
+    for (let i = 0; i < 5; i++) { t.push(v); v += i % 2 ? d2 : d1; }
+  } else if (kind === 2) {                // multiply by a ratio
+    const a = rnd(1, 3), r = rnd(2, Math.min(4, 1 + d));
+    t = [0, 1, 2, 3, 4].map(i => a * r ** i);
+  } else if (kind === 3) {                // squares
+    const s = rnd(1, 4 + d);
+    t = [0, 1, 2, 3, 4].map(i => (s + i) ** 2);
+  } else {                                // multiply then add
+    const a = rnd(1, 3), m = rnd(2, 3), c = rnd(1, 4 + d);
+    t = [a];
+    for (let i = 1; i < 5; i++) t.push(t[i - 1] * m + c);
+  }
+  const ans = t[4];
+  const opts = new Set([ans]);
+  const spread = Math.max(2, Math.round(Math.abs(ans) * 0.12));
+  while (opts.size < 4) {
+    const c = ans + rnd(1, spread) * (Math.random() < 0.5 ? -1 : 1);
+    if (c >= 0) opts.add(c);
+  }
+  return { shown: t.slice(0, 4), ans, opts: shuffle([...opts]) };
+}
+
+function runSeq() {
+  const lvl = prog('seq').level;
+  const stage = $('#stage');
+  let i = 0, score = 0;
+  function question() {
+    if (i === 8) { finish('seq', score); return; }
+    const d = lvl + Math.floor(i / 3);
+    const Q = seqQuestion(d);
+    stage.innerHTML = `
+      <div class="progress"><i style="width:${(i / 8) * 100}%"></i></div>
+      <p class="hint">Question ${i + 1} of 8</p>
+      <div class="seq">${Q.shown.map(n => `<span class="tile">${n}</span>`).join('')}<span class="tile q">?</span></div>
+      <div class="opts">${Q.opts.map(n => `<button class="opt" data-v="${n}">${n}</button>`).join('')}</div>
+      <p class="feedback" id="fb" aria-live="polite"></p>`;
+    let answered = false;
+    stage.querySelectorAll('.opt').forEach(btn => btn.onclick = () => {
+      if (answered) return;
+      answered = true;
+      const v = +btn.dataset.v;
+      if (v === Q.ans) { score++; btn.classList.add('ok'); $('#fb').textContent = 'Correct.'; }
+      else {
+        btn.classList.add('bad');
+        stage.querySelectorAll('.opt').forEach(b => { if (+b.dataset.v === Q.ans) b.classList.add('ok'); });
+        $('#fb').textContent = `It was ${Q.ans}.`;
+      }
+      i++;
+      later(question, 1000);
+    });
+  }
+  question();
+}
+
+/* ---------- 2. Memory Grid ---------- */
+function runGrid() {
+  const lvl = prog('grid').level;
+  const stage = $('#stage');
+  const cols = lvl >= 4 ? 5 : 4, N = cols * cols;
+  let n = gridStart(lvl), cleared = 0;
+
+  function round() {
+    const target = new Set();
+    while (target.size < n) target.add(rnd(0, N - 1));
+    stage.innerHTML = `
+      <p class="hint" id="hint">Memorise the lit squares.</p>
+      <div class="grid" style="grid-template-columns:repeat(${cols},1fr)">${Array.from({ length: N }, (_, k) =>
+        `<button class="cell" data-k="${k}" aria-label="Square ${k + 1}"></button>`).join('')}</div>`;
+    const cells = [...stage.querySelectorAll('.cell')];
+    const picked = new Set();
+    let ready = false;
+    target.forEach(k => cells[k].classList.add('lit'));
+    const showMs = Math.max(600, 1000 + n * 150 - lvl * 50);
+    later(() => {
+      cells.forEach(c => c.classList.remove('lit'));
+      $('#hint').textContent = `Tap the ${n} squares you saw.`;
+      ready = true;
+    }, showMs);
+    cells.forEach(c => c.onclick = () => {
+      if (!ready) return;
+      const k = +c.dataset.k;
+      if (picked.has(k)) return;
+      if (target.has(k)) {
+        picked.add(k); c.classList.add('hit');
+        if (picked.size === n) {
+          cleared = n; ready = false;
+          $('#hint').textContent = 'Got them. Next round.';
+          n = Math.min(n + 1, 12, N - 1);
+          later(round, 900);
+        }
+      } else {
+        ready = false;
+        c.classList.add('miss');
+        target.forEach(t => { if (!picked.has(t)) cells[t].classList.add('reveal'); });
+        $('#hint').textContent = 'Not quite.';
+        later(() => finish('grid', cleared), 1500);
+      }
+    });
+  }
+  round();
+}
+
+/* ---------- 3. Mental Math Sprint ---------- */
+function runSprint() {
+  const lvl = prog('sprint').level;
+  const stage = $('#stage');
+  let solved = 0, left = 60, ans = 0;
+  stage.innerHTML = `
+    <div class="timer"><span id="left">60</span><span class="unit">seconds left</span></div>
+    <div class="prob" id="prob"></div>
+    <input id="ans" class="field" type="number" inputmode="numeric" autocomplete="off" aria-label="Your answer">
+    <div class="row"><button class="btn primary" id="sub">Check</button></div>
+    <p class="hint">Solved: <b id="solved">0</b></p>`;
+  const input = $('#ans');
+
+  function make() {
+    const d = lvl + Math.floor(solved / 5);
+    const pool = ['+', '−'];
+    if (d >= 2) pool.push('×');
+    if (d >= 3) pool.push('÷');
+    if (d >= 4) pool.push('mix');
+    const op = pool[rnd(0, pool.length - 1)];
+    let text;
+    if (op === '+') { const a = rnd(5, 10 + d * 12), b = rnd(5, 10 + d * 12); ans = a + b; text = `${a} + ${b}`; }
+    else if (op === '−') { const a = rnd(10, 20 + d * 15), b = rnd(1, a); ans = a - b; text = `${a} − ${b}`; }
+    else if (op === '×') { const a = rnd(2, 4 + d * 2), b = rnd(2, 9 + d); ans = a * b; text = `${a} × ${b}`; }
+    else if (op === '÷') { const b = rnd(2, 9 + d), q = rnd(2, 9 + d); ans = q; text = `${b * q} ÷ ${b}`; }
+    else { const a = rnd(2, 9), b = rnd(2, 9), c = rnd(5, 20 + d * 3); ans = a * b + c; text = `${a} × ${b} + ${c}`; }
+    $('#prob').textContent = text;
+    input.value = '';
+    input.focus();
+  }
+
+  function submit() {
+    if (input.value === '') return;
+    if (Number(input.value) === ans) { solved++; $('#solved').textContent = solved; }
+    else {
+      const p = $('#prob');
+      p.classList.add('bad');
+      setTimeout(() => p.classList.remove('bad'), 300);
+    }
+    make();
+  }
+
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+  $('#sub').onclick = submit;
+  make();
+  tick = setInterval(() => {
+    left--;
+    const l = $('#left');
+    if (l) l.textContent = left;
+    if (left <= 0) {
+      clearInterval(tick); tick = null;
+      finish('sprint', solved);
+    }
+  }, 1000);
+}
+
+/* ---------- 4. Colour Clash (Stroop) ---------- */
+const COLORS = [
+  { n: 'Red',    c: '#B3402A' },
+  { n: 'Blue',   c: '#2446C9' },
+  { n: 'Green',  c: '#2E7D4F' },
+  { n: 'Amber',  c: '#B7790F' },
+  { n: 'Purple', c: '#7A3DB8' },
+  { n: 'Teal',   c: '#0F7C7C' }
+];
+
+function runStroop() {
+  const lvl = prog('stroop').level;
+  const stage = $('#stage');
+  const TOTAL = 12;
+  let i = 0, score = 0, ink = 0, answered = false, trialId = 0;
+
+  stage.innerHTML = `
+    <div class="meta" id="cnt"></div>
+    <div class="word" id="w"></div>
+    <div class="timer-row"><span id="ssecs"></span> s</div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="opts" id="opts"></div>
+    <p class="hint">Tap the colour the word is printed in.</p>`;
+
+  function answer(k) {
+    if (answered) return;
+    answered = true;
+    clearInterval(tick); tick = null;
+    if (k === ink) score++;
+    $('#w').classList.add('dim');
+    i++;
+    later(trial, 350);
+  }
+
+  function trial() {
+    if (i === TOTAL) { finish('stroop', score); return; }
+    const d = lvl + Math.floor(i / 4);
+    const count = Math.min(COLORS.length, 3 + Math.floor(d / 2));
+    const deadline = Math.max(1200, 3200 - d * 350);
+    const word = rnd(0, count - 1);
+    do { ink = rnd(0, count - 1); } while (ink === word);
+
+    const w = $('#w');
+    w.classList.remove('dim');
+    w.textContent = COLORS[word].n;
+    w.style.color = COLORS[ink].c;
+    $('#cnt').textContent = `${i + 1} of ${TOTAL}`;
+    $('#opts').className = count > 4 ? 'opts four' : 'opts';
+    $('#opts').innerHTML = COLORS.slice(0, count).map((c, k) =>
+      `<button class="opt" data-k="${k}">${c.n}</button>`).join('');
+    $('#opts').onclick = e => {
+      const b = e.target.closest('.opt');
+      if (b) answer(+b.dataset.k);
+    };
+
+    const myId = ++trialId;
+    answered = false;
+    countdown(deadline, 'ssecs', 'bar');
+    later(() => { if (myId === trialId && !answered) answer(-1); }, deadline);
+  }
+  trial();
+}
+
+/* ---------- 5. Digit Echo ---------- */
+function runDigits() {
+  const lvl = prog('digits').level;
+  const stage = $('#stage');
+  let len = 2 + lvl, cleared = 0;
+
+  function round() {
+    const seq = [];
+    for (let k = 0; k < len; k++) seq.push(rnd(0, 9));
+    const step = Math.max(450, 900 - lvl * 60);
+    stage.innerHTML = `
+      <div class="digit" id="dg"></div>
+      <p class="hint" id="hint">Watch closely.</p>
+      <div id="entry"></div>`;
+
+    let k = 0;
+    function show() {
+      if (k < seq.length) {
+        $('#dg').textContent = seq[k++];
+        later(() => { $('#dg').textContent = ''; later(show, 200); }, step);
+      } else {
+        $('#dg').textContent = '';
+        ask();
+      }
+    }
+
+    function ask() {
+      $('#hint').textContent = `Type the ${len} digits in reverse order.`;
+      $('#entry').innerHTML = `
+        <div class="row"><input id="ans" class="field" type="text" inputmode="numeric" maxlength="${len}" autocomplete="off" aria-label="Digits in reverse"></div>
+        <div class="row"><button class="btn primary" id="sub">Check</button></div>`;
+      const input = $('#ans');
+      const want = seq.slice().reverse().join('');
+      let done = false;
+      input.focus();
+      const submit = () => {
+        if (done || input.value.trim() === '') return;
+        done = true;
+        if (input.value.trim() === want) {
+          cleared = len; len++;
+          $('#hint').textContent = 'Correct.';
+          later(round, 700);
+        } else {
+          $('#hint').textContent = `It was ${want}.`;
+          later(() => finish('digits', cleared), 1600);
+        }
+      };
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+      $('#sub').onclick = submit;
+    }
+    show();
+  }
+  round();
+}
+
+/* ---------- 6. Odd Tile ---------- */
+function runOdd() {
+  const lvl = prog('odd').level;
+  const stage = $('#stage');
+  const TOTAL = 10;
+  let r = 0, score = 0, answered = false, roundId = 0;
+
+  function round() {
+    if (r === TOTAL) { finish('odd', score); return; }
+    const d = lvl + Math.floor(r / 3);
+    const size = Math.min(6, 2 + Math.ceil(d / 2));
+    const count = size * size;
+    const hue = rnd(0, 359);
+    const diff = Math.max(4, 40 - d * 4) * (Math.random() < 0.5 ? -1 : 1);
+    const oddHue = (hue + diff + 360) % 360;
+    const odd = rnd(0, count - 1);
+    const limit = Math.max(3000, 8000 - d * 500);
+
+    stage.innerHTML = `
+      <div class="meta">${r + 1} of ${TOTAL} &middot; find the different tile</div>
+      <div class="timer-row"><span id="secs">${(limit / 1000).toFixed(1)}</span> s</div>
+      <div class="bar"><i id="obar"></i></div>
+      <div class="tilegrid" style="grid-template-columns:repeat(${size},1fr)">${Array.from({ length: count }, (_, k) =>
+        `<button class="tt" data-k="${k}" style="background:hsl(${k === odd ? oddHue : hue},65%,55%)" aria-label="Tile ${k + 1}"></button>`).join('')}</div>
+      <p class="feedback" id="fb"></p>`;
+
+    answered = false;
+    const myId = ++roundId;
+
+    const bar = $('#obar');
+    requestAnimationFrame(() => {
+      bar.style.transition = `width ${limit}ms linear`;
+      bar.style.width = '0%';
+    });
+
+    const t0 = performance.now();
+    const ticker = setInterval(() => {
+      const left = Math.max(0, limit - (performance.now() - t0));
+      const s = $('#secs');
+      if (s) s.textContent = (left / 1000).toFixed(1);
+      if (left <= 0) clearInterval(ticker);
+    }, 100);
+    tick = ticker;
+
+    function resolve(k) {
+      if (answered) return;
+      answered = true;
+      clearInterval(ticker);
+      if (tick === ticker) tick = null;
+      stage.querySelector(`.tt[data-k="${odd}"]`).classList.add('show');
+      if (k === odd) {
+        score++;
+        stage.querySelector(`.tt[data-k="${odd}"]`).classList.add('ok');
+        $('#fb').textContent = 'Found it.';
+      } else if (k < 0) {
+        $('#fb').textContent = "Time's up. The different tile is outlined.";
+      } else {
+        stage.querySelector(`.tt[data-k="${k}"]`).classList.add('bad');
+        $('#fb').textContent = 'That tile matched. The different one is outlined.';
+      }
+      r++;
+      later(round, 900);
+    }
+
+    stage.querySelectorAll('.tt').forEach(t => t.onclick = () => resolve(+t.dataset.k));
+    later(() => { if (myId === roundId && !answered) resolve(-1); }, limit);
+  }
+  round();
+}
+
+/* ---------- 7. Reaction Flash ---------- */
+function runReaction() {
+  const lvl = prog('reaction').level;
+  const stage = $('#stage');
+  const TOTAL = 6;
+  const thresh = Math.max(200, 420 - lvl * 35);
+  let r = 0, hits = 0;
+
+  function round() {
+    if (r === TOTAL) { finish('reaction', hits); return; }
+    stage.innerHTML = `
+      <p class="hint">Round ${r + 1} of ${TOTAL}</p>
+      <div class="react-zone" id="z">Wait for green</div>
+      <p class="hint" id="res"></p>`;
+    const z = $('#z');
+    let state = 'wait', goAt = 0;
+    const s = session;
+    const waitMs = rnd(800, Math.max(1200, 3000 - lvl * 200));
+
+    const timer = setTimeout(() => {
+      if (s !== session || state !== 'wait') return;
+      state = 'go';
+      z.className = 'react-zone go';
+      z.textContent = 'Tap!';
+      // start the clock on the frame where green is actually painted
+      requestAnimationFrame(() => { goAt = performance.now(); });
+    }, waitMs);
+
+    // pointerdown fires on touch immediately, without the old click delay
+    z.addEventListener('pointerdown', () => {
+      if (state === 'wait') {
+        clearTimeout(timer);
+        state = 'done';
+        z.className = 'react-zone early';
+        z.textContent = 'Too early';
+        $('#res').textContent = 'Wait for the green.';
+        r++;
+        later(round, 1100);
+      } else if (state === 'go') {
+        const rt = performance.now() - (goAt || performance.now());
+        state = 'done';
+        const ok = rt <= thresh;
+        if (ok) hits++;
+        z.className = 'react-zone';
+        z.textContent = `${Math.round(rt)} ms`;
+        $('#res').textContent = ok ? 'Fast.' : `Aim for under ${thresh} ms.`;
+        r++;
+        later(round, 1100);
+      }
+    });
+  }
+  round();
+}
+
+/* ---------- 8. Simon Pads ---------- */
+const PAD_COLORS = ['#B3402A', '#2446C9', '#2E7D4F', '#B7790F'];
+
+function runSimon() {
+  const lvl = prog('simon').level;
+  const stage = $('#stage');
+  let len = 3, cleared = 0;
+
+  function round() {
+    const seq = [];
+    for (let k = 0; k < len; k++) seq.push(rnd(0, 3));
+    const flashMs = Math.max(350, 650 - lvl * 40);
+    stage.innerHTML = `
+      <p class="hint" id="hint">Watch the sequence.</p>
+      <div class="pads">${PAD_COLORS.map((c, k) =>
+        `<button class="pad" data-k="${k}" style="background:${c}" aria-label="Pad ${k + 1}"></button>`).join('')}</div>`;
+    const pads = [...stage.querySelectorAll('.pad')];
+    let i = 0, idx = 0, ready = false;
+
+    function play() {
+      if (i === seq.length) {
+        $('#hint').textContent = 'Your turn.';
+        ready = true;
+        return;
+      }
+      const p = pads[seq[i]];
+      p.classList.add('lit');
+      later(() => {
+        p.classList.remove('lit');
+        i++;
+        later(play, 200);
+      }, flashMs);
+    }
+
+    pads.forEach(p => p.onclick = () => {
+      if (!ready) return;
+      const k = +p.dataset.k;
+      p.classList.add('lit');
+      later(() => p.classList.remove('lit'), 180);
+      if (k === seq[idx]) {
+        idx++;
+        if (idx === seq.length) {
+          ready = false;
+          cleared = len;
+          len++;
+          $('#hint').textContent = 'Correct.';
+          later(round, 800);
+        }
+      } else {
+        ready = false;
+        pads[seq[idx]].classList.add('lit');
+        $('#hint').textContent = 'Wrong pad. The right one is lit.';
+        later(() => finish('simon', cleared), 1400);
+      }
+    });
+
+    play();
+  }
+  round();
+}
+
+/* ---------- 9. Number Hunt ---------- */
+function runHunt() {
+  const lvl = prog('hunt').level;
+  const stage = $('#stage');
+  let boards = 0, left = 60;
+
+  function board() {
+    const d = lvl + Math.floor(boards / 2);
+    const n = Math.min(25, 5 + d * 2);
+    const cols = Math.ceil(Math.sqrt(n));
+    const nums = shuffle(Array.from({ length: n }, (_, i) => i + 1));
+    stage.innerHTML = `
+      <div class="timer-row"><span id="left">${left}</span> s</div>
+      <p class="hint" id="hint">Find 1 to ${n} in order.</p>
+      <div class="tilegrid" style="grid-template-columns:repeat(${cols},1fr)">${nums.map(v =>
+        `<button class="nh" data-v="${v}">${v}</button>`).join('')}</div>`;
+    let next = 1;
+    stage.querySelector('.tilegrid').onclick = e => {
+      const b = e.target.closest('.nh');
+      if (!b || b.disabled) return;
+      const v = +b.dataset.v;
+      if (v === next) {
+        b.classList.add('done');
+        b.disabled = true;
+        next++;
+        if (next > n) {
+          boards++;
+          $('#hint').textContent = 'Board clear.';
+          later(board, 350);
+        }
+      } else {
+        b.classList.add('wrong');
+        left = Math.max(0, left - 2);          // 2 second penalty
+        $('#left').textContent = left;
+        later(() => b.classList.remove('wrong'), 300);
+      }
+    };
+  }
+
+  board();
+  tick = setInterval(() => {
+    left--;
+    const l = $('#left');
+    if (l) l.textContent = Math.max(0, left);
+    if (left <= 0) {
+      clearInterval(tick); tick = null;
+      finish('hunt', boards);
+    }
+  }, 1000);
+}
+
+/* ---------- 10. Rule Switch ---------- */
+function runRule() {
+  const lvl = prog('rule').level;
+  const stage = $('#stage');
+  const TOTAL = 12;
+  const NUMS = [1, 2, 3, 4, 6, 7, 8, 9];
+  let i = 0, score = 0, rule = rnd(0, 1), answered = false, trialId = 0;
+
+  stage.innerHTML = `
+    <div class="meta" id="rcnt"></div>
+    <div class="prob" id="rnum"></div>
+    <div class="timer-row"><span id="rsecs"></span> s</div>
+    <div class="bar"><i id="rbar"></i></div>
+    <div class="opts" id="ropts"></div>
+    <p class="feedback" id="rfb"></p>`;
+
+  // rule 0: odd / even. rule 1: above / below 5. Labels stay in the same places.
+  const labels = () => rule === 0 ? ['Odd', 'Even'] : ['Above 5', 'Below 5'];
+  const correctIdx = n => rule === 0 ? (n % 2 === 1 ? 0 : 1) : (n > 5 ? 0 : 1);
+
+  function answer(k, cIdx) {
+    if (answered) return;
+    answered = true;
+    clearInterval(tick); tick = null;
+    const ok = k === cIdx;
+    if (ok) score++;
+    stage.querySelectorAll('#ropts .opt').forEach((b, j) => {
+      if (j === cIdx) b.classList.add('ok');
+      else if (j === k) b.classList.add('bad');
+    });
+    $('#rfb').textContent = ok ? 'Correct' : (k < 0 ? 'Too slow' : 'Wrong');
+    i++;
+    later(trial, 700);
+  }
+
+  function trial() {
+    if (i === TOTAL) { finish('rule', score); return; }
+    if (i > 0 && i % 4 === 0) rule = 1 - rule;   // silent switch every four trials
+    const n = NUMS[rnd(0, NUMS.length - 1)];
+    const cIdx = correctIdx(n);
+    const limit = Math.max(1500, 3000 - lvl * 200);
+
+    $('#rcnt').textContent = `${i + 1} of ${TOTAL}`;
+    $('#rnum').textContent = n;
+    $('#rfb').textContent = '';
+    $('#ropts').innerHTML = labels().map((t, k) => `<button class="opt" data-k="${k}">${t}</button>`).join('');
+    $('#ropts').onclick = e => {
+      const b = e.target.closest('.opt');
+      if (b) answer(+b.dataset.k, cIdx);
+    };
+
+    const myId = ++trialId;
+    answered = false;
+    countdown(limit, 'rsecs', 'rbar');
+    later(() => { if (myId === trialId && !answered) answer(-1, cIdx); }, limit);
+  }
+  trial();
+}
+
+/* ---------- Wiring ---------- */
+const runners = {
+  seq: runSeq, grid: runGrid, sprint: runSprint, stroop: runStroop,
+  digits: runDigits, odd: runOdd, reaction: runReaction,
+  simon: runSimon, hunt: runHunt, rule: runRule
+};
+
+/* ---------- Backup and restore (works in the HTML file and in the app) ---------- */
+function backupJSON() {
+  return JSON.stringify({ app: 'brain-lab', schema: SCHEMA, exported: new Date().toISOString(), games: S }, null, 2);
+}
+function bkMsg(text) { $('#bk-msg').textContent = text; }
+
+$('#bk-dl').onclick = () => {
+  const text = backupJSON();
+  $('#bk-text').value = text;
+  try {
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'brain-lab-progress.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    bkMsg('Backup downloaded. Keep that file safe. If nothing downloaded, copy the text below instead.');
+  } catch (e) {
+    bkMsg('Download is not available here. Copy the text below instead.');
+  }
+};
+
+$('#bk-copy').onclick = () => {
+  const text = backupJSON();
+  $('#bk-text').value = text;
+  try {
+    navigator.clipboard.writeText(text)
+      .then(() => bkMsg('Copied.'))
+      .catch(() => bkMsg('Select the text below and copy it manually.'));
+  } catch (e) {
+    bkMsg('Select the text below and copy it manually.');
+  }
+};
+
+$('#bk-restore').onclick = () => {
+  const raw = $('#bk-in').value.trim();
+  if (!raw) { bkMsg('Paste a backup first.'); return; }
+  let doc;
+  try { doc = JSON.parse(raw); } catch (e) { bkMsg("That does not look like a Brain Lab backup."); return; }
+  const games = doc && doc.games ? doc.games : null;
+  if (!games || typeof games !== 'object' || !Object.keys(games).length) {
+    bkMsg('No progress was found in that backup.');
+    return;
+  }
+  S = migrate({ schema: doc.schema || 2, games });
+  persist();
+  renderHome();
+  $('#bk-in').value = '';
+  bkMsg('Progress restored. Your levels and best scores are back.');
+};
+
+initStore();
+</script>
+</body>
+</html>
