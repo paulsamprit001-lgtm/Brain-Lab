@@ -1160,8 +1160,7 @@ function runCipher(){
   const word=words[(i+Math.floor(Math.random()*words.length))%words.length],shift=1+(i%3);
   const coded=word.split('').map(c=>String.fromCharCode(65+((c.charCodeAt(0)-65+shift)%26))).join('');
   const decode=w=>w.split('').map(c=>String.fromCharCode(65+((c.charCodeAt(0)-65-shift+26)%26))).join('');
-  const answer=decode(coded),opts=shuffle([answer,...Array.from({length:3},()=>words[rnd(0,words.length-1)]).filter(x=>x!==answer).slice(0,3)]);
-  while(opts.length<4){const v=words[rnd(0,words.length-1)];if(!opts.includes(v))opts.push(v);}
+  const answer=decode(coded),distractors=shuffle(words.filter(w=>w!==answer)).slice(0,3),opts=shuffle([answer,...distractors]);
   return{coded,shift,opts,answer:opts.indexOf(answer)};
  },q=>`Decode <strong style="letter-spacing:.18em">${q.coded.split('').join(' ')}</strong><br><span class="hint">Each letter was shifted forward by ${q.shift}. Shift it back.</span>`);
 }
