@@ -319,8 +319,8 @@ const games = {
   scramble:{ name:'Word Shuffle', blurb:'Unscramble letters before the clue fades.', pass:()=>4, fmt:v=>`${v} of 6` },
   focus:{ name:'Focus Burst', blurb:'Spot the target symbol in a busy field.', pass:()=>5, fmt:v=>`${v} of 8` },
   direction:{ name:'Direction Flip', blurb:'Follow changing left, right, up and down cues.', pass:()=>6, fmt:v=>`${v} of 8` },
-  estimate:{ name:'Quick Estimate', blurb:'Choose the closest answer without overthinking.', pass:()=>5, fmt:v=>`${v} of 8` },
-  sequence:{ name:'Soundless Sequence', blurb:'Memorise a growing pattern of shapes.', pass:l=>Math.min(7,3+l), fmt:v=>`${v} steps` }
+  logic:{ name:'Logic Links', blurb:'Complete everyday word relationships.', pass:()=>5, fmt:v=>`${v} of 8` },
+  cipher:{ name:'Code Breaker', blurb:'Decode words using a simple letter shift.', pass:()=>5, fmt:v=>`${v} of 8` }
 };
 
 /* ---------- Saved progress (account database, with a local copy) ---------- */
@@ -437,8 +437,8 @@ function renderHome() {
     scramble: ['🔤', '#F08A5D', '#F6C667'],
     focus: ['✳️', '#6C63FF', '#A8A2FF'],
     direction: ['🧭', '#2BB8A5', '#8CE0CE'],
-    estimate: ['📐', '#E76F9A', '#F4A6C1'],
-    sequence: ['🧩', '#4D96FF', '#9CCBFF']
+    logic: ['🧠', '#E76F9A', '#F4A6C1'],
+    cipher: ['🔐', '#4D96FF', '#9CCBFF']
   };
   $('#list').innerHTML = Object.entries(games).map(([id, g]) => {
     const p = prog(id);
@@ -1141,24 +1141,29 @@ function runDirection(){
  const dirs=['←','→','↑','↓'];
  quickChoice('direction',8,(l,i)=>{const cue=dirs[rnd(0,3)],opposite={'←':'→','→':'←','↑':'↓','↓':'↑'},opts=shuffle([cue,opposite[cue],dirs.filter(x=>x!==cue&&x!==opposite[cue])[0],dirs.filter(x=>x!==cue&&x!==opposite[cue])[1]]);return{cue,opts,answer:opts.indexOf(cue)};},q=>`Press the direction shown: <strong style="font-size:2.8em">${q.cue}</strong>`);
 }
-function runEstimate(){
- quickChoice('estimate',8,(l)=>{const a=rnd(12,35+l*3),b=rnd(8,25+l*2),ans=a*b,opts=shuffle([ans,ans+rnd(3,12),ans-rnd(3,12),ans+rnd(15,25)]);return{a,b,opts,answer:opts.indexOf(ans)};},q=>`Estimate <strong>${q.a} × ${q.b}</strong><br><span class="hint">Choose the closest result</span>`);
+const LOGIC_QUESTIONS=[
+ ['Bird is to nest as bee is to…','hive',['hive','web','den','shell']],
+ ['Puppy is to dog as kitten is to…','cat',['cat','cow','foal','cub']],
+ ['A key opens a lock; a password opens an…','account',['account','window','engine','book']],
+ ['Glove is to hand as shoe is to…','foot',['foot','head','arm','knee']],
+ ['Day is to night as summer is to…','winter',['winter','spring','sun','rain']],
+ ['Author is to book as composer is to…','music',['music','paint','dance','film']],
+ ['Thermometer is to temperature as clock is to…','time',['time','distance','weight','speed']],
+ ['Seed is to tree as egg is to…','bird',['bird','nest','feather','wing']]
+];
+function runLogic(){
+ quickChoice('logic',8,(l,i)=>{const q=LOGIC_QUESTIONS[i%LOGIC_QUESTIONS.length],opts=shuffle([...q[2]]);return{prompt:q[0],opts,answer:opts.indexOf(q[1])};},q=>q.prompt);
 }
-function runSequence(){
- const icons=['●','▲','■','◆','✦','⬟','✚'];
- const level=prog('sequence').level,stage=$('#stage');
- let round=0,score=0;
- function show(){
-  if(round===6){finish('sequence',score);return;}
-  const n=Math.min(3+Math.floor((level+round)/2),7),seq=Array.from({length:n},()=>icons[rnd(0,icons.length-1)]);
-  stage.innerHTML=`<p class="hint">Memorise this pattern</p><div class="seq">${seq.map(x=>`<span class="tile">${x}</span>`).join('')}</div><button class="btn primary" id="ready">I've memorised it</button>`;
-  $('#ready').onclick=()=>{
-   stage.innerHTML=`<p class="hint">Repeat the pattern in order</p><div class="opts" id="seqopts">${shuffle([...icons]).map(x=>`<button class="opt" data-v="${x}">${x}</button>`).join('')}</div><div class="seq" id="chosen"></div><p class="feedback" id="sfb"></p><button class="btn primary" id="submit">Check pattern</button>`;
-   const chosen=[];stage.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(chosen.length<n){chosen.push(b.dataset.v);$('#chosen').innerHTML=chosen.map(x=>`<span class="tile">${x}</span>`).join('');}});
-   $('#submit').onclick=()=>{if(chosen.length!==n)return;const ok=chosen.every((x,i)=>x===seq[i]);if(ok)score++;$('#sfb').textContent=ok?'Perfect recall.':'The pattern was '+seq.join(' ');round++;later(show,900);};
-  };
- }
- show();
+function runCipher(){
+ const words=['BRAIN','LIGHT','FOCUS','THINK','SMART','IDEAS','LEARN','PUZZLE'];
+ quickChoice('cipher',8,(l,i)=>{
+  const word=words[(i+Math.floor(Math.random()*words.length))%words.length],shift=1+(i%3);
+  const coded=word.split('').map(c=>String.fromCharCode(65+((c.charCodeAt(0)-65+shift)%26))).join('');
+  const decode=w=>w.split('').map(c=>String.fromCharCode(65+((c.charCodeAt(0)-65-shift+26)%26))).join('');
+  const answer=decode(coded),opts=shuffle([answer,...Array.from({length:3},()=>words[rnd(0,words.length-1)]).filter(x=>x!==answer).slice(0,3)]);
+  while(opts.length<4){const v=words[rnd(0,words.length-1)];if(!opts.includes(v))opts.push(v);}
+  return{coded,shift,opts,answer:opts.indexOf(answer)};
+ },q=>`Decode <strong style="letter-spacing:.18em">${q.coded.split('').join(' ')}</strong><br><span class="hint">Each letter was shifted forward by ${q.shift}. Shift it back.</span>`);
 }
 
 /* ---------- Wiring ---------- */
@@ -1166,7 +1171,7 @@ const runners = {
   seq: runSeq, grid: runGrid, sprint: runSprint, stroop: runStroop,
   digits: runDigits, odd: runOdd, reaction: runReaction,
   simon: runSimon, hunt: runHunt, rule: runRule,
-  scramble:runScramble, focus:runFocus, direction:runDirection, estimate:runEstimate, sequence:runSequence
+  scramble:runScramble, focus:runFocus, direction:runDirection, logic:runLogic, cipher:runCipher
 };
 
 /* ---------- Backup and restore (works in the HTML file and in the app) ---------- */
