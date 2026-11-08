@@ -1,0 +1,8 @@
+{
+  "appId": "com.brainlab.app",
+  "appName": "Brain Lab",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
