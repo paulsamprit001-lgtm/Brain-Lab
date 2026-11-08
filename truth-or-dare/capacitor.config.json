@@ -1,8 +1,0 @@
-{
-  "appId": "com.truthordare.game",
-  "appName": "Truth or Dare",
-  "webDir": "www",
-  "server": {
-    "androidScheme": "https"
-  }
-}
