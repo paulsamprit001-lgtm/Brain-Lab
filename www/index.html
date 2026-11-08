@@ -319,7 +319,7 @@ const games = {
   scramble:{ name:'Word Shuffle', blurb:'Unscramble letters before the clue fades.', pass:()=>4, fmt:v=>`${v} of 6` },
   focus:{ name:'Focus Burst', blurb:'Spot the target symbol in a busy field.', pass:()=>5, fmt:v=>`${v} of 8` },
   direction:{ name:'Direction Flip', blurb:'Follow changing left, right, up and down cues.', pass:()=>6, fmt:v=>`${v} of 8` },
-  logic:{ name:'Logic Links', blurb:'Complete everyday word relationships.', pass:()=>5, fmt:v=>`${v} of 8` },
+  maze:{ name:'Maze Runner', blurb:'Find a safe path through changing mini mazes.', pass:()=>4, fmt:v=>`${v} of 5 mazes` },
   cipher:{ name:'Code Breaker', blurb:'Decode words using a simple letter shift.', pass:()=>5, fmt:v=>`${v} of 8` }
 };
 
@@ -437,7 +437,7 @@ function renderHome() {
     scramble: ['🔤', '#F08A5D', '#F6C667'],
     focus: ['✳️', '#6C63FF', '#A8A2FF'],
     direction: ['🧭', '#2BB8A5', '#8CE0CE'],
-    logic: ['🧠', '#E76F9A', '#F4A6C1'],
+    maze: ['🧭', '#E76F9A', '#F4A6C1'],
     cipher: ['🔐', '#4D96FF', '#9CCBFF']
   };
   $('#list').innerHTML = Object.entries(games).map(([id, g]) => {
@@ -1151,8 +1151,36 @@ const LOGIC_QUESTIONS=[
  ['Thermometer is to temperature as clock is to…','time',['time','distance','weight','speed']],
  ['Seed is to tree as egg is to…','bird',['bird','nest','feather','wing']]
 ];
-function runLogic(){
- quickChoice('logic',8,(l,i)=>{const q=LOGIC_QUESTIONS[i%LOGIC_QUESTIONS.length],opts=shuffle([...q[2]]);return{prompt:q[0],opts,answer:opts.indexOf(q[1])};},q=>q.prompt);
+function runMaze(){
+ const stage=$('#stage'),size=5;
+ const layouts=[
+  ['.....','..#..','.#...','...#.','.....'],
+  ['.....','.##..','.....','..##.','.....'],
+  ['.....','.#.#.','...#.','##...','.....'],
+  ['.....','..#..','##...','...#.','.....'],
+  ['.....','.#...','.##..','...#.','.....']
+ ];
+ let round=0,score=0,pos={x:0,y:0};
+ function draw(){
+  if(round>=5){finish('maze',score);return;}
+  const rows=layouts[round].map(r=>r.split(''));
+  rows[0][0]='S';rows[4][4]='G';
+  stage.innerHTML=`<p class="hint">Maze ${round+1} of 5 · Reach the green goal</p>
+   <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;max-width:310px;margin:14px auto">
+   ${rows.map((row,y)=>row.map((cell,x)=>`<div style="aspect-ratio:1;display:grid;place-items:center;border-radius:10px;background:${pos.x===x&&pos.y===y?'#7C5CFF':cell==='#'?'#34394B':cell==='G'?'#28B98B':'var(--card, #202638)'};color:white;font-size:1.2rem;font-weight:800">${pos.x===x&&pos.y===y?'●':cell==='#'?'':cell==='G'?'★':''}</div>`).join('')).join('')}
+   </div>
+   <div style="display:grid;grid-template-columns:repeat(3,58px);gap:7px;justify-content:center;margin:12px auto">
+    <span></span><button class="opt" data-move="0,-1">↑</button><span></span>
+    <button class="opt" data-move="-1,0">←</button><button class="opt" data-move="0,1">↓</button><button class="opt" data-move="1,0">→</button>
+   </div><p class="feedback" id="maze-msg">Move one square at a time. Dark squares are blocked.</p>`;
+  stage.querySelectorAll('[data-move]').forEach(btn=>btn.onclick=()=>{
+   const [dx,dy]=btn.dataset.move.split(',').map(Number),nx=pos.x+dx,ny=pos.y+dy;
+   if(nx<0||ny<0||nx>=size||ny>=size||layouts[round][ny][nx]==='#'){ $('#maze-msg').textContent='Blocked! Try another route.';return; }
+   pos={x:nx,y:ny};
+   if(nx===4&&ny===4){score++;round++;pos={x:0,y:0};later(draw,450);}else draw();
+  });
+ }
+ draw();
 }
 function runCipher(){
  const words=['BRAIN','LIGHT','FOCUS','THINK','SMART','IDEAS','LEARN','PUZZLE'];
@@ -1170,7 +1198,7 @@ const runners = {
   seq: runSeq, grid: runGrid, sprint: runSprint, stroop: runStroop,
   digits: runDigits, odd: runOdd, reaction: runReaction,
   simon: runSimon, hunt: runHunt, rule: runRule,
-  scramble:runScramble, focus:runFocus, direction:runDirection, logic:runLogic, cipher:runCipher
+  scramble:runScramble, focus:runFocus, direction:runDirection, maze:runMaze, cipher:runCipher
 };
 
 /* ---------- Backup and restore (works in the HTML file and in the app) ---------- */
